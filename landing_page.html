@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BuildCraft — Learn Web Dev by Building</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0c0e;
+      --surface: #141518;
+      --card: #1a1b1f;
+      --border: #2a2b30;
+      --accent: #e8ff47;
+      --accent2: #ff6b35;
+      --accent3: #5b8cff;
+      --text: #f0f0ed;
+      --muted: #7a7b82;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-ui: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s, width 0.2s, height 0.2s, background 0.2s;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1.5px solid var(--accent);
+      border-radius: 50%;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.18s ease-out, opacity 0.3s;
+      opacity: 0.5;
+    }
+
+    /* Noise Texture */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.35;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 4rem;
+      background: rgba(11,12,14,0.75);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      animation: slideDown 0.6s ease both;
+    }
+    @keyframes slideDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform:none; } }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--muted); }
+
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.85rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--accent); color: #000;
+      padding: 0.55rem 1.4rem; border-radius: 2px;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .nav-cta:hover { background: #fff; transform: translateY(-1px); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 8rem 4rem 4rem;
+      position: relative;
+      gap: 4rem;
+    }
+
+    .hero-bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .hero-bg-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(ellipse, rgba(232,255,71,0.07) 0%, transparent 70%);
+      top: 10%; right: 0;
+      pointer-events: none;
+    }
+
+    .hero-left { position: relative; z-index: 1; }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--accent); background: rgba(232,255,71,0.08);
+      border: 1px solid rgba(232,255,71,0.2);
+      padding: 0.4rem 0.9rem; border-radius: 2px;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+    .hero-tag::before { content: '◆'; font-size: 0.5rem; }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 5.5vw, 5.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+    .hero-title em { font-style: italic; color: var(--accent); }
+
+    .hero-desc {
+      font-size: 1.05rem; line-height: 1.75;
+      color: var(--muted); max-width: 500px;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 1rem; align-items: center;
+      animation: fadeUp 0.7s 0.5s ease both;
+    }
+    .btn-primary {
+      background: var(--accent); color: #000;
+      padding: 0.9rem 2.2rem;
+      font-family: var(--font-ui);
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; text-decoration: none;
+      border-radius: 2px;
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 0 0 0 rgba(232,255,71,0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(232,255,71,0.25);
+    }
+    .btn-secondary {
+      color: var(--text); font-size: 0.9rem; font-weight: 600;
+      text-decoration: none; padding: 0.9rem 1.4rem;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      border: 1px solid var(--border); border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--muted); color: var(--accent); }
+
+    @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform:none; } }
+
+    /* HERO RIGHT — Code Preview */
+    .hero-right {
+      position: relative; z-index: 1;
+      animation: fadeUp 0.8s 0.45s ease both;
+    }
+    .code-window {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+    .code-titlebar {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 1.2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .code-filename {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--muted); margin-left: 0.5rem;
+    }
+    .code-body {
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.9;
+      overflow-x: auto;
+    }
+    .c-tag { color: #5b8cff; }
+    .c-attr { color: #e8ff47; }
+    .c-val { color: #ff6b35; }
+    .c-txt { color: #aab; }
+    .c-cmt { color: #4a4b55; font-style: italic; }
+
+    .preview-card {
+      margin: 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .preview-bar {
+      background: var(--surface);
+      padding: 0.5rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .preview-url {
+      flex: 1; background: var(--card);
+      border-radius: 4px; padding: 0.25rem 0.75rem;
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
+    }
+    .preview-content {
+      background: #fff; padding: 1.2rem;
+      min-height: 90px;
+    }
+    .preview-content h3 { font-family: Georgia, serif; font-size: 1rem; color: #111; margin-bottom: 0.3rem; }
+    .preview-content p { font-size: 0.7rem; color: #666; line-height: 1.5; }
+    .preview-content .preview-btn {
+      display: inline-block; margin-top: 0.5rem;
+      background: #222; color: #fff; font-size: 0.65rem;
+      padding: 0.3rem 0.7rem; border-radius: 3px;
+    }
+
+    /* STATS */
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      background: var(--bg);
+      padding: 2.5rem 4rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 3rem; color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label { font-size: 0.85rem; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; }
+
+    /* CONCEPTS SECTION */
+    .section { padding: 6rem 4rem; position: relative; }
+    .section-label {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--accent); letter-spacing: 0.15em;
+      text-transform: uppercase; margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      line-height: 1.15;
+      max-width: 700px; margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--muted); font-size: 1rem; line-height: 1.7; max-width: 580px; margin-bottom: 3.5rem; }
+
+    .concepts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .concept-card {
+      background: var(--bg);
+      padding: 2rem;
+      transition: background 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .concept-card:hover { background: var(--card); }
+    .concept-card:hover .concept-icon { transform: scale(1.1) rotate(-5deg); }
+
+    .concept-num {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: var(--border); margin-bottom: 1.5rem;
+      letter-spacing: 0.1em;
+    }
+    .concept-icon {
+      font-size: 1.8rem; margin-bottom: 1.2rem;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .concept-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .concept-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+    .concept-tag {
+      display: inline-block; margin-top: 1.2rem;
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--accent3); background: rgba(91,140,255,0.08);
+      padding: 0.2rem 0.6rem; border-radius: 2px;
+    }
+
+    /* PROCESS SECTION */
+    .process-section {
+      padding: 6rem 4rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .steps-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0; position: relative;
+    }
+    .steps-container::before {
+      content: '';
+      position: absolute;
+      top: 2.5rem; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .step { padding: 2rem; padding-top: 5rem; position: relative; }
+    .step-num {
+      position: absolute; top: 0; left: 2rem;
+      width: 5rem; height: 5rem;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 0.8rem; font-weight: 500;
+      color: #000; background: var(--accent);
+      clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+    }
+    .step-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .step-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+
+    /* ELEMENTS SECTION */
+    .elements-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    .element-list { display: flex; flex-direction: column; gap: 0; }
+    .element-item {
+      display: flex; align-items: flex-start; gap: 1.5rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+      cursor: default;
+      transition: padding-left 0.2s;
+    }
+    .element-item:hover { padding-left: 0.5rem; }
+    .element-item:hover .element-accent { background: var(--accent); color: #000; }
+
+    .element-accent {
+      width: 2.5rem; height: 2.5rem; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--accent); border: 1px solid currentColor;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .element-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .element-tip { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+    .live-preview-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      position: sticky; top: 100px;
+    }
+    .lpb-header {
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .lpb-title { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+    .lpb-badge {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      color: #000; background: var(--accent);
+      padding: 0.15rem 0.5rem; border-radius: 2px;
+    }
+    .lpb-body { padding: 1.5rem; }
+
+    .mini-landing {
+      background: #fff; border-radius: 4px; overflow: hidden;
+      font-size: 0; /* collapse whitespace */
+    }
+    .ml-header {
+      background: #1a1a2e; padding: 0.6rem 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ml-logo { width: 50px; height: 8px; background: #e8ff47; border-radius: 2px; font-size: 0; }
+    .ml-nav { display: flex; gap: 0.4rem; }
+    .ml-navdot { width: 22px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .ml-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 1.5rem 1rem; text-align: center; }
+    .ml-h { width: 60%; height: 10px; background: rgba(232,255,71,0.8); border-radius: 2px; margin: 0 auto 0.5rem; }
+    .ml-p { width: 80%; height: 6px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 0.3rem; }
+    .ml-btn-mini { width: 60px; height: 18px; background: #e8ff47; border-radius: 2px; margin: 0.7rem auto 0; display: block; }
+    .ml-cards { display: flex; gap: 0.4rem; padding: 0.8rem; background: #f5f5f5; }
+    .ml-card { flex: 1; background: #fff; border-radius: 3px; padding: 0.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .ml-card-h { height: 6px; background: #ddd; border-radius: 2px; margin-bottom: 0.3rem; }
+    .ml-card-p { height: 4px; background: #eee; border-radius: 2px; margin-bottom: 0.15rem; width: 80%; }
+    .ml-footer-mini { background: #1a1a2e; padding: 0.5rem 1rem; display: flex; justify-content: space-between; }
+    .ml-flink { width: 30px; height: 5px; background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+    .palette-display {
+      margin-top: 1.5rem;
+      display: flex; gap: 0.5rem;
+    }
+    .palette-swatch {
+      flex: 1; height: 36px; border-radius: 4px;
+      position: relative; overflow: hidden;
+      cursor: pointer;
+    }
+    .palette-swatch::after {
+      content: attr(data-color);
+      position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-mono); font-size: 0.55rem;
+      color: rgba(0,0,0,0.5);
+      white-space: nowrap;
+    }
+
+    /* CTA SECTION */
+    .cta-section {
+      padding: 7rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      width: 800px; height: 800px;
+      background: radial-gradient(ellipse, rgba(232,255,71,0.05) 0%, transparent 65%);
+      left: 50%; top: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .cta-eyebrow {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--accent); letter-spacing: 0.2em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+    }
+    .cta-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 5rem);
+      line-height: 1.08;
+      margin-bottom: 1.5rem;
+    }
+    .cta-title span { color: var(--accent); font-style: italic; }
+    .cta-sub { color: var(--muted); font-size: 1.05rem; max-width: 520px; margin: 0 auto 3rem; line-height: 1.7; }
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; align-items: center; }
+    .cta-note { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); margin-top: 1.5rem; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 4rem;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 3rem;
+    }
+    .footer-brand .logo-text {
+      font-family: var(--font-mono); font-size: 1.1rem;
+      color: var(--accent); margin-bottom: 0.8rem;
+      display: block;
+    }
+    .footer-brand p { font-size: 0.85rem; color: var(--muted); line-height: 1.65; max-width: 280px; }
+    .footer-col h4 {
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 1.2rem;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+    .footer-col a { color: var(--text); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom {
+      padding: 1.5rem 4rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.78rem; color: var(--muted);
+      font-family: var(--font-mono);
+    }
+    .footer-bottom a { color: var(--accent); text-decoration: none; }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 3rem; }
+      .hero-right { display: none; }
+      .stats { grid-template-columns: 1fr; }
+      .stat { padding: 2rem 1.5rem; }
+      .section, .process-section { padding: 4rem 1.5rem; }
+      .concepts-grid { grid-template-columns: 1fr; }
+      .steps-container { grid-template-columns: 1fr 1fr; }
+      .elements-grid { grid-template-columns: 1fr; }
+      .live-preview-box { display: none; }
+      footer { grid-template-columns: 1fr 1fr; padding: 2.5rem 1.5rem; }
+      .footer-bottom { padding: 1rem 1.5rem; flex-direction: column; gap: 0.5rem; }
+      .cta-section { padding: 5rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- Nav -->
+  <nav>
+    <a href="#" class="nav-logo">build<span>craft</span>.dev</a>
+    <ul class="nav-links">
+      <li><a href="#concepts">Concepts</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#elements">Elements</a></li>
+      <li><a href="#start">Start</a></li>
+    </ul>
+    <a href="#start" class="nav-cta">Start Building →</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-bg-glow"></div>
+
+    <div class="hero-left">
+      <div class="hero-tag">Beginner-Friendly · Project-Based Learning</div>
+      <h1 class="hero-title">
+        Build your first<br>
+        <em>landing page</em><br>
+        from scratch.
+      </h1>
+      <p class="hero-desc">
+        Master HTML structure and CSS styling by creating a real, visually stunning page.
+        Learn columns, sections, colors, spacing — and unleash your creativity.
+      </p>
+      <div class="hero-actions">
+        <a href="#concepts" class="btn-primary">Explore Concepts <span>↓</span></a>
+        <a href="#start" class="btn-secondary">View Roadmap →</a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="code-window">
+        <div class="code-titlebar">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span class="code-filename">index.html</span>
+        </div>
+        <div class="code-body">
+          <span class="c-cmt">&lt;!-- Landing page structure --&gt;</span><br>
+          <span class="c-tag">&lt;header</span> <span class="c-attr">class</span><span>=</span><span class="c-val">"hero"</span><span class="c-tag">&gt;</span><br>
+          &nbsp;&nbsp;<span class="c-tag">&lt;nav&gt;</span><span class="c-tag">&lt;/nav&gt;</span><br>
+          &nbsp;&nbsp;<span class="c-tag">&lt;h1&gt;</span><span class="c-txt">Your Headline</span><span class="c-tag">&lt;/h1&gt;</span><br>
+          &nbsp;&nbsp;<span class="c-tag">&lt;p&gt;</span><span class="c-txt">Compelling description</span><span class="c-tag">&lt;/p&gt;</span><br>
+          &nbsp;&nbsp;<span class="c-tag">&lt;button&gt;</span><span class="c-txt">Call to Action</span><span class="c-tag">&lt;/button&gt;</span><br>
+          <span class="c-tag">&lt;/header&gt;</span><br><br>
+          <span class="c-tag">&lt;section</span> <span class="c-attr">class</span><span>=</span><span class="c-val">"features"</span><span class="c-tag">&gt;</span><br>
+          &nbsp;&nbsp;<span class="c-cmt">&lt;!-- Feature cards --&gt;</span><br>
+          <span class="c-tag">&lt;/section&gt;</span><br><br>
+          <span class="c-tag">&lt;footer&gt;</span><span class="c-tag">&lt;/footer&gt;</span>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="preview-url">localhost:3000 / index.html</div>
+        </div>
+        <div class="preview-content">
+          <h3>My First Landing Page 🚀</h3>
+          <p>A beautifully crafted page showcasing HTML & CSS skills.</p>
+          <span class="preview-btn">Get Started</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat reveal"><span class="stat-num">2</span><span class="stat-label">Core Technologies</span></div>
+    <div class="stat reveal"><span class="stat-num">7</span><span class="stat-label">Key CSS Concepts</span></div>
+    <div class="stat reveal"><span class="stat-num">∞</span><span class="stat-label">Creative Possibilities</span></div>
+  </div>
+
+  <!-- Concepts -->
+  <section class="section" id="concepts">
+    <p class="section-label reveal">Core Knowledge</p>
+    <h2 class="section-title reveal">Everything you'll learn building one page.</h2>
+    <p class="section-sub reveal">A landing page is deceptively rich. Nail it and you've mastered the fundamentals that power every website on the internet.</p>
+    <div class="concepts-grid">
+      <div class="concept-card reveal">
+        <p class="concept-num">01 —</p>
+        <span class="concept-icon">⬛</span>
+        <h3 class="concept-title">HTML Structure</h3>
+        <p class="concept-desc">Headers, sections, footers, divs — learn how semantic HTML organizes content in a logical, meaningful hierarchy.</p>
+        <span class="concept-tag">&lt;header&gt; &lt;section&gt; &lt;footer&gt;</span>
+      </div>
+      <div class="concept-card reveal">
+        <p class="concept-num">02 —</p>
+        <span class="concept-icon">📐</span>
+        <h3 class="concept-title">CSS Flexbox & Grid</h3>
+        <p class="concept-desc">Create powerful two-dimensional layouts. Arrange items in rows and columns without fighting the box model.</p>
+        <span class="concept-tag">display: flex / grid</span>
+      </div>
+      <div class="concept-card reveal">
+        <p class="concept-num">03 —</p>
+        <span class="concept-icon">🎨</span>
+        <h3 class="concept-title">Color Palette</h3>
+        <p class="concept-desc">Understand color theory applied to web design. Primary, accent, and neutral colors working harmoniously together.</p>
+        <span class="concept-tag">color / background / opacity</span>
+      </div>
+      <div class="concept-card reveal">
+        <p class="concept-num">04 —</p>
+        <span class="concept-icon">↔️</span>
+        <h3 class="concept-title">Spacing & Alignment</h3>
+        <p class="concept-desc">Padding, margin, and gap — the holy trinity of whitespace that separates cluttered designs from clean ones.</p>
+        <span class="concept-tag">padding / margin / gap</span>
+      </div>
+      <div class="concept-card reveal">
+        <p class="concept-num">05 —</p>
+        <span class="concept-icon">🔤</span>
+        <h3 class="concept-title">Typography</h3>
+        <p class="concept-desc">Font families, weights, sizes, and line-height. Beautiful text is the backbone of a compelling landing page.</p>
+        <span class="concept-tag">font-family / font-size / line-height</span>
+      </div>
+      <div class="concept-card reveal">
+        <p class="concept-num">06 —</p>
+        <span class="concept-icon">📱</span>
+        <h3 class="concept-title">Responsive Design</h3>
+        <p class="concept-desc">Media queries ensure your page looks great on every device — from a phone screen to a wide monitor.</p>
+        <span class="concept-tag">@media / viewport / clamp()</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Process -->
+  <section class="process-section" id="process">
+    <p class="section-label reveal">Build Process</p>
+    <h2 class="section-title reveal">From blank file to live page.</h2>
+    <p class="section-sub reveal">Follow this sequence. Don't skip steps — each one builds on the last.</p>
+    <div class="steps-container">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <h3 class="step-title">Plan your layout</h3>
+        <p class="step-desc">Sketch on paper first. Decide on sections: nav, hero, features, testimonials, CTA, footer. Know before you code.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02</div>
+        <h3 class="step-title">Write the HTML</h3>
+        <p class="step-desc">Build the skeleton. Semantic HTML only. Don't style yet — structure comes first, appearance follows.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03</div>
+        <h3 class="step-title">Apply CSS</h3>
+        <p class="step-desc">Start with layout (flexbox/grid), then spacing, then colors and fonts. Work from macro to micro.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04</div>
+        <h3 class="step-title">Polish & refine</h3>
+        <p class="step-desc">Hover states, transitions, font pairing, color refinement. This is where good designs become great ones.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Elements to focus on -->
+  <section class="section" id="elements">
+    <p class="section-label reveal">Key Design Elements</p>
+    <h2 class="section-title reveal">Pay attention to these.</h2>
+    <div class="elements-grid">
+      <div class="element-list reveal">
+        <div class="element-item">
+          <div class="element-accent">⬡</div>
+          <div>
+            <div class="element-name">Alignment</div>
+            <div class="element-tip">Everything should align to an invisible grid. Misalignment is the #1 sign of an amateur design. Use flexbox alignment properties religiously.</div>
+          </div>
+        </div>
+        <div class="element-item">
+          <div class="element-accent">□</div>
+          <div>
+            <div class="element-name">Boxes & Cards</div>
+            <div class="element-tip">Learn border, border-radius, box-shadow, and overflow. Cards are the universal container of the web — master them early.</div>
+          </div>
+        </div>
+        <div class="element-item">
+          <div class="element-accent">↕</div>
+          <div>
+            <div class="element-name">Padding</div>
+            <div class="element-tip">Content that breathes feels premium. Generous internal spacing separates polished pages from cramped, busy ones.</div>
+          </div>
+        </div>
+        <div class="element-item">
+          <div class="element-accent">◑</div>
+          <div>
+            <div class="element-name">Color Palette</div>
+            <div class="element-tip">Choose 3 colors max: one dominant, one accent, one neutral. Use CSS variables so you can tweak the whole palette in one place.</div>
+          </div>
+        </div>
+        <div class="element-item">
+          <div class="element-accent">≡</div>
+          <div>
+            <div class="element-name">Z-index & Overlap</div>
+            <div class="element-tip">Understand the stacking context. Overlapping elements look great when intentional — catastrophic when accidental.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="live-preview-box reveal">
+        <div class="lpb-header">
+          <span class="lpb-title">live_preview.html</span>
+          <span class="lpb-badge">DEMO</span>
+        </div>
+        <div class="lpb-body">
+          <div class="mini-landing">
+            <div class="ml-header">
+              <div class="ml-logo"></div>
+              <div class="ml-nav">
+                <div class="ml-navdot"></div>
+                <div class="ml-navdot"></div>
+                <div class="ml-navdot"></div>
+              </div>
+            </div>
+            <div class="ml-hero">
+              <div class="ml-h"></div>
+              <div class="ml-p"></div>
+              <div class="ml-p" style="width:60%;margin:0 auto 0.3rem;"></div>
+              <div class="ml-btn-mini"></div>
+            </div>
+            <div class="ml-cards">
+              <div class="ml-card"><div class="ml-card-h"></div><div class="ml-card-p"></div><div class="ml-card-p"></div></div>
+              <div class="ml-card"><div class="ml-card-h"></div><div class="ml-card-p"></div><div class="ml-card-p"></div></div>
+              <div class="ml-card"><div class="ml-card-h"></div><div class="ml-card-p"></div><div class="ml-card-p"></div></div>
+            </div>
+            <div class="ml-footer-mini">
+              <div class="ml-flink"></div><div class="ml-flink"></div><div class="ml-flink"></div>
+            </div>
+          </div>
+          <div class="palette-display">
+            <div class="palette-swatch" data-color="#1a1a2e" style="background:#1a1a2e;"></div>
+            <div class="palette-swatch" data-color="#e8ff47" style="background:#e8ff47;"></div>
+            <div class="palette-swatch" data-color="#ff6b35" style="background:#ff6b35;"></div>
+            <div class="palette-swatch" data-color="#5b8cff" style="background:#5b8cff;"></div>
+            <div class="palette-swatch" data-color="#f0f0ed" style="background:#f0f0ed;"></div>
+          </div>
+          <p style="font-family:var(--font-mono);font-size:0.68rem;color:var(--muted);margin-top:0.75rem;line-height:1.5;">
+            ↑ Sample page structure. Header → sections → footer.<br>Palette: 1 dark bg + 3 accents + 1 light.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" id="start">
+    <p class="cta-eyebrow reveal">Ready?</p>
+    <h2 class="cta-title reveal">Your blank canvas<br><span>awaits you.</span></h2>
+    <p class="cta-sub reveal">
+      Open a text editor. Create index.html and style.css. Write your first tag.
+      That's where every great developer started.
+    </p>
+    <div class="cta-actions reveal">
+      <a href="#concepts" class="btn-primary">Review Concepts ↑</a>
+      <a href="#process" class="btn-secondary">See the Process →</a>
+    </div>
+    <p class="cta-note reveal">No frameworks. No build tools. Just HTML, CSS, and your creativity.</p>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-brand reveal">
+      <span class="logo-text">buildcraft.dev</span>
+      <p>A learning resource for developers discovering the web for the first time. Build real things. Learn by doing.</p>
+    </div>
+    <div class="footer-col reveal">
+      <h4>Learn</h4>
+      <ul>
+        <li><a href="#">HTML Basics</a></li>
+        <li><a href="#">CSS Fundamentals</a></li>
+        <li><a href="#">Flexbox Guide</a></li>
+        <li><a href="#">Grid Layout</a></li>
+      </ul>
+    </div>
+    <div class="footer-col reveal">
+      <h4>Projects</h4>
+      <ul>
+        <li><a href="#">Landing Page</a></li>
+        <li><a href="#">Portfolio Site</a></li>
+        <li><a href="#">Blog Layout</a></li>
+        <li><a href="#">Dashboard UI</a></li>
+      </ul>
+    </div>
+    <div class="footer-col reveal">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="#">Color Tools</a></li>
+        <li><a href="#">Font Pairing</a></li>
+        <li><a href="#">CSS Reference</a></li>
+        <li><a href="#">Inspiration</a></li>
+      </ul>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <span>© 2026 buildcraft.dev — made with HTML &amp; CSS</span>
+    <span><a href="#">Privacy</a> · <a href="#">Terms</a></span>
+  </div>
+
+  <script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animateCursor() {
+      cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+    document.querySelectorAll('a, button, .concept-card, .element-item').forEach(el => {
+      el.addEventListener('mouseenter', () => { cursor.style.width = '20px'; cursor.style.height = '20px'; ring.style.opacity = '0'; });
+      el.addEventListener('mouseleave', () => { cursor.style.width = '12px'; cursor.style.height = '12px'; ring.style.opacity = '0.5'; });
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
